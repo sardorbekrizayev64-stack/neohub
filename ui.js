@@ -2,8 +2,19 @@
    UI.JS - УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
    =================================== */
 
+// Страницы, требующие авторизации
+const PROTECTED_PAGES = ['profile', 'testing'];
+
 // Переключение между страницами
 function switchPage(pageId) {
+    // ── Блокируем доступ без авторизации ──────────────────────────────
+    if(PROTECTED_PAGES.includes(pageId)) {
+        if(typeof isAuthenticated === 'undefined' || !isAuthenticated) {
+            if(typeof showLocked === 'function') showLocked();
+            return;
+        }
+    }
+
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
     
     let target = pageId + '-view';
