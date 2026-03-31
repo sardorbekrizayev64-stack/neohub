@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEO.HUB - Образовательная платформа</title>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Inline Styles for News Images -->
+    <style>
+        .news-image-container {
+            width: 100%;
+            margin: 15px 0 20px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 243, 255, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .news-image-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.1), rgba(188, 19, 254, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .news-image-container:hover::before {
+            opacity: 1;
+        }
+        
+        .news-image-container:hover {
+            box-shadow: 0 12px 40px rgba(0, 243, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .news-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+            max-height: 400px;
+            transition: transform 0.5s ease;
+        }
+        
+        .news-image-container:hover .news-image {
+            transform: scale(1.05);
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .news-image {
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- №3 — Particle Swarm Background -->
+    <div id="cyberpunk-bg">
+        <canvas id="swarm-canvas"></canvas>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeSearchModal()"></div>
+    
+    <div class="search-modal" id="searchModal">
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--error-red); margin-bottom: 15px;"></i>
+        <h3 style="color: var(--text-main); margin-bottom: 10px;">Предмет не найден</h3>
+        <p style="color: var(--text-sec);">К сожалению, данный предмет ещё не добавлен на платформу.</p>
+        <button class="btn-main" onclick="closeSearchModal()" style="margin-top: 20px; width: auto; padding: 10px 30px;">Понятно</button>
+    </div>
+
+    <div class="locked-overlay" id="lockedOverlay">
+        <div class="locked-content">
+            <i class="fas fa-lock"></i>
+            <h2 style="color: var(--text-main); margin-bottom: 15px;">Требуется авторизация</h2>
+            <p style="color: var(--text-sec); margin-bottom: 25px;">
+                Для доступа к этому разделу необходимо войти в систему или зарегистрироваться.
+            </p>
+            <button class="btn-main" onclick="showAuth()" style="width: auto; padding: 12px 40px;">
+                Войти / Регистрация
+            </button>
+            <button class="chat-btn" onclick="closeLocked()" style="margin-top: 15px;">
+                Вернуться назад
+            </button>
+        </div>
+    </div>
+
+    <!-- №2 — Модальное окно Политики конфиденциальности -->
+    <div class="modal-overlay" id="policyOverlay" onclick="closePolicyModal()"></div>
+    <div class="policy-modal" id="policyModal">
+        <div class="policy-modal-header">
+            <i class="fas fa-shield-alt" style="color: var(--neon-green);"></i>
+            <h2>Политика конфиденциальности</h2>
+        </div>
+        <div class="policy-modal-body">
+            <p><strong>Дата вступления в силу:</strong> 17 февраля 2026 года</p>
+            
+            <h4>1. Согласие на обработку персональных данных</h4>
+            <p>Регистрируясь на платформе <strong>NEO.HUB</strong>, вы даёте своё добровольное согласие на сбор и обработку ваших персональных данных в соответствии с настоящей Политикой конфиденциальности.</p>
+
+            <h4>2. Какие данные мы собираем</h4>
+            <p>В процессе регистрации и использования платформы мы собираем следующие данные:</p>
+            <ul>
+                <li>ФИО (Фамилия, Имя, Отчество)</li>
+                <li>Адрес электронной почты (Email)</li>
+                <li>Наименование учебного заведения (ВУЗ)</li>
+                <li>Номер телефона и дата рождения (по желанию, в личном кабинете)</li>
+            </ul>
+
+            <h4>3. Цель обработки данных</h4>
+            <p>Ваши данные используются исключительно для:</p>
+            <ul>
+                <li>Идентификации пользователя на платформе</li>
+                <li>Предоставления доступа к образовательным материалам</li>
+                <li>Связи с вами по вопросам поддержки (при наличии обращения)</li>
+            </ul>
+
+            <h4>4. Конфиденциальность и защита данных</h4>
+            <p>Мы гарантируем <strong>полную конфиденциальность</strong> ваших персональных данных. Ваши данные:</p>
+            <ul>
+                <li>Не передаются третьим лицам без вашего ведома</li>
+                <li>Не используются в рекламных и маркетинговых целях без согласия</li>
+                <li>Хранятся в защищённом формате</li>
+                <li>Могут быть удалены по вашему запросу в любое время</li>
+            </ul>
+
+            <h4>5. Сроки хранения данных</h4>
+            <p>Ваши данные хранятся на протяжении всего периода использования платформы и удаляются в течение <strong>30 дней</strong> после вашего запроса на удаление аккаунта.</p>
+
+            <h4>6. Ваши права</h4>
+            <p>Вы имеете право в любой момент:</p>
+            <ul>
+                <li>Получить информацию о своих данных</li>
+                <li>Запросить исправление или удаление данных</li>
+                <li>Отозвать согласие на обработку данных</li>
+            </ul>
+
+            <h4>7. Контакты</h4>
+            <p>По всем вопросам, связанным с обработкой персональных данных, обращайтесь к администратору: <strong>@RS_Pov</strong></p>
+
+            <div class="policy-footer-note">
+                <i class="fas fa-lock"></i> NEO.HUB гарантирует полную конфиденциальность ваших данных.
+            </div>
+        </div>
+        <button class="btn-main" onclick="closePolicyModal(); document.getElementById('policyConsent').checked = true;" style="width: 100%; margin-top: 0;">
+            Принять и закрыть
+        </button>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="logo" style="font-size: 2.5rem; margin-bottom: 20px;">
+            <i class="fas fa-atom"></i> NEO.HUB
+        </div>
+        
+        <div id="login-form" class="auth-card">
+            <h2 style="margin-bottom: 20px;">Вход в систему</h2>
+            <form onsubmit="handleLogin(event)">
+                <input type="email" id="loginEmail" class="auth-input" placeholder="Email" required>
+                <input type="password" id="loginPass" class="auth-input" placeholder="Пароль" required>
+                <button type="submit" class="btn-main">Войти</button>
+            </form>
+            <div class="auth-toggle-link">
+                Нет аккаунта? <span onclick="toggleAuthMode('register')">Зарегистрироваться</span>
+            </div>
+        </div>
+
+        <div id="register-form" class="auth-card hidden">
+            <h2 style="margin-bottom: 20px;">Регистрация студента</h2>
+            <form onsubmit="handleRegister(event)">
+                <input type="text" id="regName" class="auth-input" placeholder="ФИО (Фамилия Имя Отчество)" required>
+                <input type="email" id="regEmail" class="auth-input" placeholder="Email" required>
+                <input type="password" id="regPass" class="auth-input" placeholder="Пароль (мин. 6 символов)" required minlength="6">
+                <input type="password" id="regPassConfirm" class="auth-input" placeholder="Подтвердите пароль" required minlength="6">
+                
+                <!-- №3 — Умный поиск ВУЗа -->
+                <div class="uni-search-wrapper">
+                    <input type="text" id="uniSearchInput" class="auth-input uni-search-input" 
+                           placeholder="🔍 Поиск ВУЗа..." autocomplete="off"
+                           oninput="filterUniversities(this.value)"
+                           onfocus="showUniDropdown()"
+                           onblur="hideUniDropdown()">
+                    <input type="hidden" id="universitySelect" name="universitySelect">
+                    <!-- дропдаун рендерится в <body> через JS -->
+                </div>
+
+                <!-- №2 — Согласие с политикой конфиденциальности -->
+                <div class="policy-consent-block">
+                    <label class="policy-label">
+                        <input type="checkbox" id="policyConsent" class="policy-checkbox">
+                        <span class="policy-text">
+                            Я ознакомился(-ась) и согласен(-на) с 
+                            <span class="policy-link" onclick="showPolicyModal()">Политикой конфиденциальности</span>.
+                            Я даю согласие на обработку моих персональных данных.
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-main">Зарегистрироваться</button>
+            </form>
+            <div class="auth-toggle-link">
+                Уже есть аккаунт? <span onclick="toggleAuthMode('login')">Войти</span>
+            </div>
+        </div>
+
+        <button class="chat-btn" onclick="closeAuth()" style="margin-top: 20px;">
+            Продолжить без регистрации
+        </button>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container">
+        <header>
+            <div class="logo" onclick="switchPage('home')">
+                <i class="fas fa-atom"></i> NEO.HUB
+            </div>
+            <div style="display: flex; align-items: center;">
+                <nav id="navbar">
+                    <ul>
+                        <li><a href="#" onclick="switchPage('about')" id="nav-about">О нас</a></li>
+                        <li><a href="#" onclick="switchPage('news')" id="nav-news">Новости</a></li>
+                        <li><a href="#" onclick="switchPage('resources')" id="nav-resources">Ресурсы</a></li>
+                        <li><a href="#" onclick="checkAuth('testing')" id="nav-testing" class="locked-nav">Тестирование</a></li>
+                        <li><a href="#" onclick="checkAuth('profile')" id="nav-profile" class="locked-nav">Профиль</a></li>
+                        <li><a href="#" onclick="switchPage('students')" id="nav-students">Студенты</a></li>
+                        <li><a href="#" onclick="switchPage('support')" id="nav-support">Поддержка</a></li>
+                    </ul>
+                </nav>
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                    <i class="fas fa-sun"></i>
+                </button>
+                <button class="auth-btn" id="authButton" onclick="showAuth()">Войти</button>
+                <div class="menu-toggle" onclick="toggleMenu()" style="margin-left: 15px;">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Home View -->
+            <div id="home-view" class="page-section active">
+                <section class="hero">
+                    <h1>Добро пожаловать, <span id="homeUserName" style="color: var(--neon-blue)">Гость</span></h1>
+                    <p style="color: var(--text-sec); font-size: 1.1rem;">
+                        Выделяем главное в сложном. Только концентрированные знания без воды для тех, кто ценит свое время.
+                    </p>
+                </section>
+
+                <div class="search-container">
+                    <div style="position: relative;">
+                        <input type="text" class="search-input" placeholder="Найти предмет..." id="subjectSearchInput" oninput="handleSearchInput(this)" onkeyup="handleSearchKey(event)">
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+                </div>
+                
+                <div class="subjects-grid" id="subjectsGrid">
+                    <div class="subject-card" onclick="openSubject('physics')" data-subject="физика" data-keywords="механика электричество оптика">
+                        <i class="fas fa-magnet card-icon icon-physics"></i>
+                        <div class="subject-title">Физика</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('lang')" data-subject="иностранный язык" data-keywords="английский грамматика языки">
+                        <i class="fas fa-globe card-icon icon-lang"></i>
+                        <div class="subject-title">Иностранный язык</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('writing')" data-subject="академическое письмо" data-keywords="эссе курсовая диплом">
+                        <i class="fas fa-pen-nib card-icon icon-write"></i>
+                        <div class="subject-title">Академическое письмо</div>
+                    </div>
+                    <div class="subject-card locked" onclick="checkAuthSubject('coding')" data-subject="программирование" data-keywords="python код it">
+                        <i class="fas fa-code card-icon icon-code"></i>
+                        <div class="subject-title">Программирование</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('history')" data-subject="новейшая история узбекистана" data-keywords="история узбекистан реформы">
+                        <i class="fas fa-landmark card-icon icon-history"></i>
+                        <div class="subject-title">Новейшая история Узбекистана</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('algebra')" data-subject="линейная алгебра" data-keywords="матрицы векторы математика">
+                        <i class="fas fa-square-root-alt card-icon icon-algebra"></i>
+                        <div class="subject-title">Линейная алгебра</div>
+                    </div>
+                    <div class="subject-card locked" onclick="checkAuthSubject('database')" data-subject="база данных" data-keywords="sql mysql nosql">
+                        <i class="fas fa-database card-icon icon-database"></i>
+                        <div class="subject-title">База данных</div>
+                    </div>
+                    <div class="subject-card locked" onclick="checkAuthSubject('network')" data-subject="компьютерные сети" data-keywords="network internet tcp">
+                        <i class="fas fa-network-wired card-icon icon-network"></i>
+                        <div class="subject-title">Компьютерные сети</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('discrete')" data-subject="дискретные структуры" data-keywords="графы множества логика">
+                        <i class="fas fa-project-diagram card-icon icon-discrete"></i>
+                        <div class="subject-title">Дискретные структуры</div>
+                    </div>
+                    <div class="subject-card locked" onclick="checkAuthSubject('electronics')" data-subject="электроника и схемы" data-keywords="схемы транзисторы arduino">
+                        <i class="fas fa-microchip card-icon icon-electronics"></i>
+                        <div class="subject-title">Электроника и схемы</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('philosophy')" data-subject="философия" data-keywords="мышление этика онтология">
+                        <i class="fas fa-brain card-icon icon-philosophy"></i>
+                        <div class="subject-title">Философия</div>
+                    </div>
+                    <div class="subject-card" onclick="openSubject('religion')" data-subject="религиоведение" data-keywords="религия ислам христианство">
+                        <i class="fas fa-book-open card-icon icon-religion"></i>
+                        <div class="subject-title">Религиоведение</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning View -->
+            <div id="learning-view" class="page-section"></div>
+
+            <!-- Subject Detail View -->
+            <div id="subject-detail-view" class="page-section">
+                <button onclick="switchPage('home')" class="chat-btn" style="margin-bottom: 20px;">
+                    <i class="fas fa-arrow-left"></i> Назад
+                </button>
+                <div class="subject-detail-container">
+                    <h1 id="subject-header" style="color: var(--neon-blue);">Заголовок</h1>
+                    <p id="subject-desc" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-main);">
+                        Описание...
+                    </p>
+                    
+                    <div class="resource-links-container" id="subjectActions"></div>
+                </div>
+            </div>
+
+            <!-- About View -->
+            <div id="about-view" class="page-section">
+                <h1 style="text-align: center; margin-bottom: 40px; color: var(--neon-pink);">О нас</h1>
+                <div class="about-card">
+                    <h2><i class="fas fa-bullseye" style="color: var(--neon-blue);"></i> Наша миссия</h2>
+                    <p style="color: var(--text-sec); line-height: 1.8; font-size: 1.1rem;">
+                        NEO.HUB создан для тех, кто ценит чистоту информации и свое время. Мы верим, что обучение становится эффективным, когда из него убирают лишний шум. Наша задача — не просто упрощать, а находить и структурировать ключевые данные, избавляя учебный процесс от «воды».
+                    </p>
+                </div>
+                
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3><i class="fas fa-video" style="color: var(--neon-green);"></i> Видео-объяснения</h3>
+                        <p style="color: var(--text-sec);">
+                            Короткие и емкие видеоролики по ключевым предметам. Никакой воды — только суть.
+                        </p>
+                    </div>
+                    <div class="about-card">
+                        <h3><i class="fas fa-users" style="color: var(--neon-yellow);"></i> Сообщество</h3>
+                        <p style="color: var(--text-sec);">
+                            Платформа объединяет студентов из разных ВУЗов для обмена опытом и знаниями.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News View -->
+            <!-- News View -->
+            <div id="news-view" class="page-section">
+                <h1 style="text-align: center; margin-bottom: 40px;">Новости и События</h1>
+                <div class="news-grid">
+                    
+                    <div class="news-card" style="border-color: var(--neon-green);">
+                        <span class="news-date">26 января 2026 | Мир IT</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 1 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80" 
+                                 alt="Samsung HBM4 память для AI" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h2 style="color: var(--neon-green);">Samsung первой в отрасли начнёт массовый выпуск HBM4 для Nvidia уже в феврале</h2>
+                        <div class="news-content">
+                            Samsung начнёт выпускать память типа HBM4 для Nvidia в следующем месяце.
+                            <div class="news-full">
+                                Получать эти чипы предсказуемо будет Nvidia, поскольку они требуются для производства ускорителей вычислений семейства Rubin. В случае с предыдущими поколениями ускорителей Nvidia приоритетным поставщиком HBM оставалась SK hynix, но Samsung уже давно идёт к цели по превращению в серьёзного поставщика HBM4, желая наверстать упущенное и как минимум догнать конкурента. Каким будет объём первых партий HBM4 в исполнении Samsung, не уточняется.<br><br>
+                                Южнокорейское издание Korea Economic Daily сегодня сообщило, что память HBM4 в исполнении Samsung прошла квалификационные тесты Nvidia и AMD, а потому формально этот производитель имеет возможность начать её поставки первому из клиентов в следующем месяце. Первые образцы HBM4 были отправлены Samsung для тестирования в лабораториях Nvidia ещё в сентябре прошлого года. SK hynix в октябре сообщила, что завершила переговоры о поставках HBM на 2026 год с основными клиентами. Ради удовлетворения спроса на память данного семейства SK hynix со следующего месяца начнёт поставки кремниевых пластин для производства памяти на новое предприятие M15X в Южной Корее. Samsung и SK hynix отчитаются о результатах прошлого квартала в этот четверг, наверняка на мероприятиях по этому поводу что-то будет сказано в отношении сроков поставок HBM4. Глава Nvidia в начале этого месяца подтвердил, что производство чипов для ускорителей Vera Rubin уже началось. Соответственно, медлить с выпуском HBM4 для этой платформы особой нужды нет.
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                    <div class="news-card">
+                        <span class="news-date">17 января 2026 | AI Новости</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 2 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&q=80" 
+                                 alt="AI генерация видео и венчурные инвестиции" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h3>Субботний венчур: $80 млн в генерацию видео и 400 млн рублей в ИИ-агентов</h3>
+                        <div class="news-content">
+                            Forbes публикует первый в этом году дайджест новостей из мира стартапов и венчура. В новом выпуске — $80 млн в сервис для генерации видео Higgsfield, три новые сделки фонда «Восход», первые инвестиции на ранней стадии «Восток Инвестиций» и другие события.
+                            <div class="news-full">
+                                Американский ИИ-генератор видео Higgsfield с российскими корнями привлек $80 млн и достиг оценки в $1,3 млрд. В раунде участвовали фонды Accel, GFT Ventures и Menlo Ventures. Деньги пойдут на развитие корпоративных продаж, разработку и масштабирование, сообщил гендиректор стартапа Александр Машрабов. В прошлом он с партнером развивал сервис AI Factory, который менял внешность человека на видео, и попал в рейтинг «30 до 30» Forbes 2020 года. В 2023-м Машрабов познакомился с казахстанский исследователем машинного обучения (ML) Ерзатом Дулатом и запустил с ним Higgsfield — сервис, который с помощью ИИ создает видеоконтент, например из фото. В 2024 году компания привлекла $8 млн от фондов Menlo Ventures, AI Capital, Bitkraft Ventures и других и вошла в рейтинг 10 самых перспективных стартапов российского Forbes. В 2025-м она стала первым «единорогом» Казахстана, преодолев оценку в $1 млрд. По последним данным, прогнозируемая годовая выручка (ARR) стартапа достигла $200 млн, добавили в компании.
+                                Немецкий IT-стартап NetBird с российскими корнями привлек $10 млн от фондов Pace Capital, Nauta Capital, InReach Ventures и Antler, пишет Tech.eu. Компания разрабатывает платформу сетевой безопасности Zero Trust для удаленных сотрудников, более надежную альтернативу корпоративным VPN. Последние предоставляют пользователю доступ ко всей системе компании по зашифрованному интернет-пути, тогда как решение NetBird связывает сотрудника с конкретными сетевыми ресурсами, исключая угрозы, которые есть с VPN, объясняет Tech.eu. NetBird в 2021 году запустили выпускник Российского университета транспорта Михаил Брагин и бразильский инженер Майкон Сантос. Компания предоставляет открытый исходный код и за счет этого выделяется на рынке похожих сервисов, которые в основном «закрыты», подчеркивает Tech.eu. Среди клиентов стартапа — компании и госорганизации по всему миру, указано на ее сайте. .<br><br>
+                                Разработчик ИИ-агентов для IT-специалистов Veai привлек 400 млн рублей от холдинга «Восток Инвестиции» и бизнес-«ангелов» Николая Антипина и Романа Чернова. Последние получили 8,5% и 4% в юрлице стартапа (ООО «ИИТЕХ»), фонд — 0,01%, следует из СПАРК. Оставшаяся доля у гендиректора и сооснователя Veai Михаила Кудинова. В прошлом он с братом Владиславом развивал дистрибьютора техники «Тонкие технологии» и сервис оптимизации доставки VeeRoute. Veai они зарегистрировали в 2025 году. Стартап выпускает ИИ-агентов, умеющих работать с кодом: тестировать его, оптимизировать, находить в нем ошибки. По собственным данным, у Veai более 20 клиентов, среди которых IT-группа IBS, инвестиционная компания БКС и Московский кредитный банк. Холдинг «Восток Инвестиции» образовался после разделения инвестгруппы Baring Vostok на российский и международный бизнес в 2022 году. Вложения в Veai — первая для фонда сделка с технологической компанией на ранней стадии.
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                    <div class="news-card">
+                        <span class="news-date">24 января 2026 | Космос</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 3 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&q=80" 
+                                 alt="Марс и добыча воды" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h3>Как получить доступ к воде на Марсе: обзор двух самых перспективных технологий</h3>
+                        <div class="news-content">
+                            Пилотируемые экспедиции на Марс столкнутся с серьезной проблемой: людям и технике нужна будет вода. Везти все необходимое с Земли дорого и практически невозможно. Поэтому колонистам придется добывать воду на месте, используя ресурсы Красной планеты. Ученым уже известно, что на Марсе H2O существует в разных формах: как лед под поверхностью планеты, влага в самом марсианском грунте и даже водяной пар в тонкой атмосфере. Но насколько реально получить воду из этих источников и какой способ эффективнее? .
+                            <div class="news-full">
+                                Недавнее исследование ученых из Глазго представило сравнительный анализ технологий добычи воды на Марсе. Они сравнили два основных подхода: добычу воды из марсианского грунта (англ. Water Extraction from the Regolith, WER) и сбор воды из атмосферы (Atmospheric Water Harvesting, AWH), а также их практическую применимость в будущих экспедициях.<br><br>
+                                Добыча воды из марсианского грунта (WER)
+                                Под грунтом Марса (реголитом) понимается поверхностный слой породы, часто сухой и измельченный в пыль. Тем не менее под тоннами этого песка может скрываться лед. Орбитальные аппараты и марсоходы нашли признаки залежей льда, особенно ближе к полярным и умеренным широтам Марса. Такой подповерхностный лед — наиболее богатый источник воды, доступный на планете.
+                                Китайский марсоход обнаружил следы недавней водной активности на Красной планете
+                                Исследование подтверждает: подповерхностный лед считается самым перспективным долгосрочным источником воды. В идеальном случае колонисты могли бы пробурить грунт, добыть лед и растопить его с относительно небольшими энергетическими затратами. Например, оценки NASA еще в 1990-х годах показали, что на извлечение 1 кг воды из богатого льдом грунта может потребоваться порядка 13 МДж энергии (это около 3.6 кВт·ч, то есть не больше, чем расходует бытовой электрочайник за пару часов работы).
+                                Однако есть нюанс: там, где удобнее сажать первые экспедиции, может не оказаться льда под ногами. На экваторе и в низких широтах Марса, где теплее и проще условия для техники, вероятнее всего нет доступного льда. Богатые льдом области расположены на высоких широтах, ближе к полярным регионам, куда высадиться сложнее из-за холода и других факторов.
+                                Поэтому инженеры рассматривают и другие варианты WER: например, нагрев марсианского грунта, чтобы выпарить и собрать содержащуюся в нем влагу, которая присутствует в виде льда или гидратированных минералов. NASA экспериментировало с такими технологиями — от буровых установок для сверления промерзшего грунта до печей, способных выпаривать воду из марсианской породы. Но эффективность этих методов зависит от содержания воды в конкретном месте. Грунт может оказаться слишком сухим, и тогда даже мощное нагревание даст считанные граммы воды.
+                                Добыча воды из грунта требует массивного оборудования и энергии, но при удачном выборе места способна обеспечить большие объемы. Если колония расположится над запасами льда, эта технология станет основным «водопроводом» для марсианских поселенцев. К тому же, воду из грунта можно получать непрерывно, накапливая запасы.
+                                Практически все планы марсианских баз делают ставку на воду из грунта — этот способ исторически считался надежнее и экономичнее, чем работа с атмосферой. Тем не менее привязка к конкретному месту, сложности бурения и энергозатраты на разогрев пород — серьезные минусы. В случае поломки буровой установки или истощения местного запаса льда база может остаться без воды. По этой причине ученые ищут резервные и дополнительные способы водоснабжения.
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                    <div class="news-card">
+                        <span class="news-date">26 января 2026 | Наука и Медицина</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 4 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80" 
+                                 alt="Медицинские исследования рака" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h3>Рак желудка называют «тихим убийцей», поскольку он развивается задолго до появления симптомов. Ученые выявили факторы, которые помогут диагностировать заболевание на ранних стадиях.</h3>
+                        <div class="news-content">
+                            Ученые обнаружили совокупность биомаркеров, которые помогут выявить болезнь как можно скорееИсточник: Unsplash.
+                            <div class="news-full">
+                                Сингапурские ученые вместе с коллегами из Гонконга, Японии, Южной Кореи, Тайваня и США провели исследование, в ходе которого обнаружили совокупность биомаркеров, которые помогут выявить болезнь как можно скорее и предложили методы ее лечения. Результаты исследования опубликованы в журнале Cancer Discovery.<br><br>
+                                Рак желудка — один из самых смертоносных видов рака в мире. Он развивается в течение нескольких десятилетий и начинается с хронического воспаления слизистой оболочки желудка. Это может привести к кишечной метаплазии, при которой клетки желудка превращаются в клетки, похожие на клетки кишечника.
+                                Такое состояние может привести к раку, однако так происходит не всегда. С помощью расширенного генетического анализа ученые выявили 47 значимых мутаций в генах в клетках кишечной метаплазии. Они обнаружили, что мутации в гене ARID1A были связаны с повышенным риском развития рака желудка, равно как и повреждение ДНК, известное как SBS17 и связанное с окислительным стрессом. Риск рака возрастал, если повреждение усугублялось курением.
+                                Кроме того исследователи выяснили, что клональное кроветворение, возникающее в преклонном возрасте и характеризующееся тем, что стволовые клетки приобретают мутации и размножаются, тоже повышает риск развития рака. Анализ также показал, что при клональном гемопоэзе в желудке находится повышенное содержание стрептококка, попадающего из слизистой рта.
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                    <div class="news-card">
+                        <span class="news-date">25 января 2026 | Мировые новости</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 5 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1464207687429-7505649dae38?w=800&q=80" 
+                                 alt="Качество воздуха и озон" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h3>Озон негативно влияет на легкие, однако мало кто знает, что основное вредное воздействие озона, которому подвергается человека, происходит не на улице, а в помещении.</h3>
+                        <div class="news-content">
+                            Озон защищает планету от вредного ультрафиолета, однако около земли он сам может стать загрязнителемИсточник: Freepik.
+                            <div class="news-full">
+                                Китайские ученые проанализировали состояние воздуха в помещении и биомаркеры здоровья студентов тибетского колледжа. Они обнаружили, что продукты реакции озона влияют не только на легкие, но сгущают кровь и затрудняют работу сердца. Результаты исследования опубликованы в журнале ACD ES&T Air.<br><br>
+                                Озон в помещении вступает в реакцию с маслами, которые содержатся в краске для стен. Кроме того, наша кожа постоянно выделяет кожное сало, богатое жирными кислотами, скваленом и холестерином. При контакте с жиром озон запускает озонолиз, в результате которого образуются карбонильные соединения: альдегид и кетоны.
+                                Сам озон не способен задерживаться в верхних дыхательных путях и проникать в организм, однако карбонилы спокойно проникают в легкие и могут попасть в кровеносную систему. Ученые решили оценить вред, который эти вещества наносят организму.
+                                снежные вершины гор
+                                Исследование провели на Тибете  — в регионе с большим уровнем озона в воздухеИсточник: Unsplash
+                                Они провели эксперимент в Лхасе — регионе с высоким уровнем озона в воздухе, чтобы исключить влияние других загрязняющих веществ. Для измерения уровня карбонилов ученые подвесили специальные трубки над кроватями 110 студентов. Они брали пробы воздуха примерно за неделю до осмотра, который проводился по четыре раза в течение лета и осени.
+                                Исследователи обнаружили. что концентрация карбонилов в закрытом помещении была в 15 раз выше, чем на улице. При вдыхании этих загрязняющих веществ у пациентов происходило увеличение показателей эритроцитов и, следовательно, сгущение крови, которое могло привести к развитию сердечно-сосудистых заболеваний.
+                                Результаты исследования говорят о том, важно учитывать влияние загрязняющего воздуха не только на улице, но и внутри помещений, где мы проводим 90% жизни.
+                                Ранее Наука Mail рассказывала о неочевидном способе защитить сердце и справиться со стрессом.
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                    <div class="news-card">
+                        <span class="news-date">14 января 2026 | Энергетика</span>
+                        
+                        <!-- ИЗОБРАЖЕНИЕ ДЛЯ НОВОСТИ 6 -->
+                        <div class="news-image-container">
+                            <img src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80" 
+                                 alt="Энергетика Узбекистана" 
+                                 class="news-image"
+                                 loading="lazy">
+                        </div>
+                        
+                        <h3>В Узбекистане появится единый регулятор энергетики и ЖКХ</h3>
+                        <div class="news-content">
+                            Президент Узбекистана одобрил предложение о создании единого регулятора для энергетического и коммунального секторов. Для крупных предприятий введут систему закупок электроэнергии на оптовом рынке по прямым договорам с почасовым ценообразованием.
+                            <div class="news-full">
+                                Президент Узбекистана Шавкат Мирзиёев 14 января ознакомился с ходом работ по созданию оптового рынка электроэнергии и внедрению новых рыночных механизмов в энергетическом секторе.
+                                На данный момент сформирован перечень оптовых потребителей, ежегодно потребляющих более 10 млн кВт⋅ч электроэнергии. Для таких предприятий предлагается внедрить механизм закупки электроэнергии на оптовом рынке по прямым договорам с почасовым ценообразованием.<br><br>
+                                Также доложено о работе по созданию отдельных регуляторов для энергетического и коммунального секторов. С учётом зарубежного опыта предлагается создать единый регулятор. С октября 2023 года в Узбекистане уже действует Агентство по развитию и регулированию рынка энергетики, которое при этом не регулирует рынок газа.
+                                Глава государства одобрил предложения и подчеркнул важность повышения энергоэффективности, рационального использования энергетических ресурсов и формирования конкурентной среды на рынке энергетики.
+                                Кроме того, органам прокуратуры и внутренних дел поручено обеспечить строгое соблюдение требований законодательства и неотвратимость ответственности в сферах энергетики, ЖКХ и повышения энергоэффективности, а также наладить тесное взаимодействие с хокимиятами для «безусловной реализации предусмотренных мер».
+                                В октябре 2024 года заместитель премьер-министра Джамшид Кучкаров заявил, что полный переход на оптовый рынок электроэнергии в Узбекистане планируется в 2027 году, газа — в 2028 году.
+                                Международная консалтинговая компания Boston Consulting Group (BCG), которая разработала стратегию развития энергетики до 2035 года, сообщала, что разработка и запуск оптового рынка электроэнергии в пилотном режиме запланирована в 2025−2026 годы.
+                                Передача функций утверждения тарифов в новое Агентство по развитию и регулированию энергетического рынка ожидается также в 2025−2026 годы.
+                                Переход к почасовому ценообразованию на оптовом рынке намечен на 2027−2028 годы.
+                                История вопроса
+                                В апреле 2020 года президент Шавкат Мирзиёев сообщил о планах создания оптового рынка электроэнергии и природного газа на основе биржевых торгов, предусмотрев обеспечение равного доступа всем участникам и прозрачного механизма ценообразования.
+                                Это также было отражено в указе президента «О мерах по проведению очередного этапа реформирования сферы энергетики» от 28 сентября 2023 года. По этому документу будет создан энергетический рынок с открытой конкурентной средой.
+                                На совещании в октябре 2023 года президент сообщил, что к 2026 году намечено внедрить свободный оптовый рынок, который будет формироваться на основе спроса и предложения электроэнергии. При этом необходимо сформировать нормативно-правовую базу, создать рыночную инфраструктуру, цифровизировать энергосистему вплоть до низового уровня, внедрить интеллектуальную систему управления в режиме реального времени (SCADA), исключающую человеческий фактор, указал глава государства.
+                                Министр энергетики Журабек Мирзамахмудов тогда отметил, что при разработке нормативно-правовой базы президент поручил в первую очередь учесть опыт Турции.
+                                Оптовый рынок электроэнергии — это платформа, где электроэнергия покупается и продаётся между производителями (электростанциями), торговыми компаниями и крупными потребителями (например, региональными сетевыми компаниями и крупными промышленными предприятиями).
+                            </div>
+                        </div>
+                        <button class="read-more-btn" onclick="toggleNews(this)">Читать далее</button>
+                    </div>
+
+                </div>
+            </div>
+            <!-- Resources View -->
+            <div id="resources-view" class="page-section">
+                <h1 style="text-align: center; margin-bottom: 40px;">Полезные ресурсы</h1>
+                <div id="resources-container"></div>
+            </div>
+
+            <!-- Students View -->
+            <div id="students-view" class="page-section">
+                <h1 style="text-align: center; margin-bottom: 30px; color: var(--neon-blue);">
+                    Таблица студентов
+                </h1>
+                <p style="text-align: center; color: var(--text-sec); margin-bottom: 25px; font-size: 0.95rem;">
+                    Здесь отображаются все пользователи, зарегистрированные на этом устройстве.
+                </p>
+                <div id="students-table-container"></div>
+            </div>
+
+            <!-- Testing View -->
+            <div id="testing-view" class="page-section">
+                <h1 style="text-align: center; margin-bottom: 40px; color: var(--neon-yellow);">Тестирование</h1>
+                <div id="testingRoot" class="testing-root">
+                    <div class="testing-placeholder">
+                        <i class="fas fa-clipboard-check"></i>
+                        <h2 style="color: var(--text-main); margin-bottom: 15px;">Загрузка...</h2>
+                        <p>Инициализация модуля тестирования</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile-view" class="page-section">
+                <div class="profile-container">
+                    <h2 style="text-align: center; margin-bottom: 30px; color: var(--neon-pink);">
+                        Личный кабинет
+                    </h2>
+                    
+                    <!-- №2 — Уникальный ID студента -->
+                    <div class="profile-field uid-field">
+                        <label class="profile-label">
+                            <i class="fas fa-id-badge" style="color:var(--neon-green); margin-right:6px;"></i>
+                            ID студента
+                        </label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" id="profUID" class="profile-value uid-value" disabled style="font-family: monospace; color: var(--neon-green); letter-spacing: 2px;">
+                            <button id="copyUidBtn" onclick="copyUID()" class="uid-copy-btn" title="Скопировать ID">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="profile-field">
+                        <label class="profile-label">ФИО</label>
+                        <input type="text" id="profFio" class="profile-value" disabled>
+                    </div>
+                    
+                    <div class="profile-field">
+                        <label class="profile-label">Университет</label>
+                        <input type="text" id="profUni" class="profile-value" disabled>
+                    </div>
+
+                    <div class="profile-field">
+                        <label class="profile-label">Email</label>
+                        <input type="text" id="profEmail" class="profile-value" disabled>
+                    </div>
+
+                    <div class="profile-field">
+                        <label class="profile-label">Телефон (+998...)</label>
+                        <input type="text" id="profPhone" class="profile-value" disabled placeholder="+998901234567">
+                    </div>
+
+                    <div class="profile-field">
+                        <label class="profile-label">Дата рождения</label>
+                        <input type="date" id="profDob" class="profile-value" disabled>
+                    </div>
+
+                    <div class="timer-msg" id="timerMsg"></div>
+                    <div class="success-msg" id="successMsg">
+                        Данные успешно сохранены! Следующее редактирование через 30 дней.
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 30px;">
+                        <button class="btn-main" id="editProfileBtn" onclick="enableEdit()" style="margin: 0; background: #333;">
+                            Редактировать
+                        </button>
+                        <button class="btn-main" id="saveProfileBtn" onclick="saveProfile()" style="margin: 0; display: none;">
+                            Сохранить
+                        </button>
+                    </div>
+
+                    <!-- №4 — Блок ответов от администратора -->
+                    <hr style="border-color: var(--border-color); margin: 30px 0;">
+                    <div style="margin-bottom: 25px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                            <h3 style="color: var(--neon-blue); font-size: 1rem; margin: 0;">
+                                <i class="fas fa-comments"></i> Мои вопросы и ответы
+                            </h3>
+                            <button id="clearAllRepliesBtn" onclick="clearAllReplies()"
+                                style="display:none; background: rgba(255,59,59,0.1); border: 1px solid rgba(255,59,59,0.35);
+                                       color: #ff6b6b; border-radius: 8px; padding: 5px 12px; font-size: 0.78rem;
+                                       cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='rgba(255,59,59,0.22)'"
+                                onmouseout="this.style.background='rgba(255,59,59,0.1)'">
+                                <i class="fas fa-trash-alt"></i> Очистить всё
+                            </button>
+                        </div>
+                        <div id="adminRepliesContainer">
+                            <p style="color: var(--text-sec); font-size: 0.9rem; text-align: center;">Загрузка...</p>
+                        </div>
+                    </div>
+
+                    <hr style="border-color: var(--border-color); margin: 30px 0;">
+                    <button class="btn-main" onclick="logout()" style="background: var(--error-red); width: 100%;">
+                        Выйти
+                    </button>
+                </div>
+            </div>
+
+            <!-- Support View -->
+            <div id="support-view" class="page-section">
+                <h1 style="text-align: center;">AI Support Assistant</h1>
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <i class="fas fa-robot" style="color: var(--neon-blue);"></i> NEO.BOT
+                    </div>
+                    <div class="chat-window" id="chatWindow"></div>
+                    <div id="chatInputContainer"></div>
+                    <div class="chat-options" id="chatOptions"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Styles for Policy Modal & Consent Checkbox -->
+    <style>
+    /* ===== №2 — Политика конфиденциальности ===== */
+    .policy-consent-block {
+        margin: 12px 0 16px 0;
+        padding: 12px 14px;
+        background: rgba(10, 255, 104, 0.06);
+        border: 1px solid rgba(10, 255, 104, 0.25);
+        border-radius: 10px;
+    }
+    .policy-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text-sec);
+        line-height: 1.5;
+    }
+    .policy-checkbox {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        margin-top: 2px;
+        accent-color: var(--neon-green);
+        cursor: pointer;
+    }
+    .policy-link {
+        color: var(--neon-green);
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .policy-link:hover { color: var(--neon-blue); }
+
+    .policy-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10000;
+        background: var(--card-bg);
+        border: 1px solid var(--neon-green);
+        border-radius: 16px;
+        box-shadow: 0 0 40px rgba(10, 255, 104, 0.3);
+        width: 90%;
+        max-width: 600px;
+        max-height: 85vh;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideDown 0.3s ease;
+    }
+    .policy-modal.show {
+        display: flex !important;
+    }
+    .policy-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .policy-modal-header h2 {
+        color: var(--text-main);
+        font-size: 1.2rem;
+        margin: 0;
+    }
+    .policy-modal-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1;
+        color: var(--text-sec);
+        font-size: 0.9rem;
+        line-height: 1.7;
+    }
+    .policy-modal-body h4 {
+        color: var(--neon-green);
+        margin: 18px 0 8px;
+        font-size: 0.95rem;
+    }
+    .policy-modal-body ul {
+        margin: 6px 0 0 18px;
+        padding: 0;
+    }
+    .policy-modal-body ul li { margin-bottom: 4px; }
+    .policy-footer-note {
+        margin-top: 20px;
+        padding: 12px;
+        background: rgba(10, 255, 104, 0.07);
+        border-radius: 8px;
+        color: var(--neon-green);
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    .policy-modal .btn-main {
+        margin: 0;
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* ===== №3 — Умный поисковик ВУЗа ===== */
+    .uni-search-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    .uni-search-input {
+        width: 100%;
+        padding-right: 36px;
+    }
+    .uni-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #1a1a1a;
+        border: 1px solid var(--neon-blue);
+        border-radius: 10px;
+        box-shadow: 0 8px 25px rgba(0,243,255,0.2);
+        z-index: 10000;
+        max-height: 220px;
+        overflow-y: auto;
+        animation: slideDown 0.2s ease;
+    }
+    [data-theme="light"] .uni-dropdown {
+        background: #ffffff;
+        border-color: var(--neon-blue);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    .uni-dropdown-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: background 0.15s;
+        line-height: 1.4;
+    }
+    .uni-dropdown-item:last-child { border-bottom: none; }
+    .uni-dropdown-item:hover, .uni-dropdown-item.selected {
+        background: rgba(0,243,255,0.12);
+        color: var(--neon-blue);
+    }
+    .uni-dropdown-item mark {
+        background: rgba(0,243,255,0.25);
+        color: var(--neon-blue);
+        border-radius: 2px;
+        padding: 0 1px;
+    }
+    .uni-dropdown-empty {
+        padding: 12px 14px;
+        color: var(--text-sec);
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    .uni-search-selected {
+        border-color: var(--neon-green) !important;
+        box-shadow: 0 0 8px rgba(10,255,104,0.2) !important;
+    }
+
+    /* ===== №2 — UID студента ===== */
+    .uid-field { background: rgba(10,255,104,0.04); border-radius: 8px; padding: 12px; }
+    .uid-value { font-family: 'Courier New', monospace !important; font-size: 1rem !important; letter-spacing: 3px !important; }
+    .uid-copy-btn {
+        background: rgba(10,255,104,0.1);
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .uid-copy-btn:hover { background: rgba(10,255,104,0.25); }
+
+    /* ===== Reply cards в профиле ===== */
+    .reply-item {
+        background: rgba(10,255,104,0.07);
+        border: 1px solid rgba(10,255,104,0.2);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+    }
+    .reply-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+    .reply-label {
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .reply-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .reply-date {
+        color: var(--text-sec);
+        font-size: 0.72rem;
+    }
+    .reply-del-btn {
+        background: rgba(255,59,59,0.1);
+        border: 1px solid rgba(255,59,59,0.3);
+        color: #ff6b6b;
+        border-radius: 6px;
+        width: 26px;
+        height: 26px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        flex-shrink: 0;
+    }
+    .reply-del-btn:hover { background: rgba(255,59,59,0.28); }
+    .reply-question {
+        color: var(--text-sec);
+        font-size: 0.82rem;
+        margin-bottom: 8px;
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 6px;
+    }
+    .reply-answer {
+        color: var(--text-main);
+        font-size: 0.92rem;
+        line-height: 1.6;
+    }
+        </style>
+
+    <!-- JavaScript Files -->
+    <script src="js/telegram_config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/learning.js"></script>
+    <script src="js/tests.js"></script>
+    <script src="js/testing.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- №3 — Умный поиск ВУЗа JS -->
+    <script>
+    /*
+     * ИСПРАВЛЕНИЕ: дропдаун рендерится напрямую в <body> с position:fixed,
+     * чтобы он не обрезался overflow:hidden / border-radius родительских
+     * контейнеров (.auth-card, #auth-screen и т.д.)
+     */
+    let selectedUniValue        = '';
+    let isSelectingFromDropdown = false;
+
+    // Создаём/получаем единственный глобальный дропдаун в <body>
+    function getBodyDropdown() {
+        var d = document.getElementById('uniBodyDropdown');
+        if (!d) {
+            d = document.createElement('div');
+            d.id = 'uniBodyDropdown';
+            d.className = 'uni-dropdown';
+            // fixed-позиционирование: не зависит ни от каких родителей
+            d.style.cssText =
+                'position:fixed; z-index:99999; display:none; ' +
+                'max-height:260px; overflow-y:auto; min-width:260px; ' +
+                'border-radius:10px;';
+            document.body.appendChild(d);
+        }
+        return d;
+    }
+
+    // Позиционируем дропдаун точно под инпутом через getBoundingClientRect
+    function positionDropdown() {
+        var input = document.getElementById('uniSearchInput');
+        var d     = getBodyDropdown();
+        if (!input) return;
+        var r         = input.getBoundingClientRect();
+        d.style.top   = (r.bottom + 4) + 'px';
+        d.style.left  = r.left + 'px';
+        d.style.width = r.width + 'px';
+    }
+
+    function filterUniversities(query) {
+        var hiddenInput = document.getElementById('universitySelect');
+        if (query !== selectedUniValue) {
+            hiddenInput.value = '';
+            selectedUniValue  = '';
+            document.getElementById('uniSearchInput').classList.remove('uni-search-selected');
+        }
+        if (query.length < 1) { showUniDropdown(); return; }
+
+        var q        = query.toLowerCase().trim();
+        var filtered = universities.filter(function(u) {
+            return u.toLowerCase().includes(q);
+        });
+        renderUniDropdown(filtered, q);
+    }
+
+    function renderUniDropdown(list, highlight) {
+        var d = getBodyDropdown();
+        positionDropdown();
+
+        if (list.length === 0) {
+            d.innerHTML     = '<div class="uni-dropdown-empty">ВУЗ не найден. Уточните запрос.</div>';
+            d.style.display = 'block';
+            return;
+        }
+
+        var html = '';
+        // Показываем до 100 совпадений (полный список при пустом запросе)
+        list.slice(0, 100).forEach(function(uni) {
+            var display = uni;
+            if (highlight) {
+                try {
+                    var rx = new RegExp('(' + highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    display = uni.replace(rx, '<mark>$1</mark>');
+                } catch(e) { display = uni; }
+            }
+            var esc = uni.replace(/\\/g, '\\\\').replace(/'/g, '\\x27');
+            html += '<div class="uni-dropdown-item" ' +
+                        'onmousedown="event.preventDefault();selectUniversity(\'' + esc + '\')">' +
+                        display + '</div>';
+        });
+        d.innerHTML     = html;
+        d.style.display = 'block';
+    }
+
+    function showUniDropdown() {
+        var query = document.getElementById('uniSearchInput').value.trim();
+        positionDropdown();
+        if (query.length > 0) {
+            filterUniversities(query);
+        } else {
+            // Пустое поле — показываем первые 100 из списка
+            renderUniDropdown(universities.slice(0, 100), '');
+        }
+    }
+
+    function hideUniDropdown() {
+        setTimeout(function() {
+            if (!isSelectingFromDropdown) {
+                var d = document.getElementById('uniBodyDropdown');
+                if (d) d.style.display = 'none';
+            }
+        }, 180);
+    }
+
+    function selectUniversity(uni) {
+        isSelectingFromDropdown = true;
+        document.getElementById('uniSearchInput').value    = uni;
+        document.getElementById('universitySelect').value  = uni;
+        document.getElementById('uniSearchInput').classList.add('uni-search-selected');
+        selectedUniValue = uni;
+        var d = document.getElementById('uniBodyDropdown');
+        if (d) d.style.display = 'none';
+        setTimeout(function() { isSelectingFromDropdown = false; }, 200);
+    }
+
+    // Перепозиционирование при ресайзе и скролле
+    window.addEventListener('resize', function() {
+        var d = document.getElementById('uniBodyDropdown');
+        if (d && d.style.display !== 'none') positionDropdown();
+    });
+    window.addEventListener('scroll', function() {
+        var d = document.getElementById('uniBodyDropdown');
+        if (d && d.style.display !== 'none') positionDropdown();
+    }, true);
+
+    // Закрытие при клике вне поля и дропдауна
+    document.addEventListener('click', function(e) {
+        var input = document.getElementById('uniSearchInput');
+        var d     = document.getElementById('uniBodyDropdown');
+        if (!d) return;
+        if (input && !input.contains(e.target) && !d.contains(e.target)) {
+            d.style.display = 'none';
+        }
+    });
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var d = document.getElementById('uniBodyDropdown');
+            if (d) d.style.display = 'none';
+        }
+    });
+    </script>
+
+    <!-- №3 — Particle Swarm Background (адаптировано из codepen.io/ImagineProgramming/pen/LpOJzM) -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ---- Vector3D ---- */
+        var Vector3D = function(x,y,z){ this.x=x||0; this.y=y||0; this.z=z||0; };
+        var v3p = Vector3D.prototype;
+        v3p.set=function(x,y,z){this.x=x;this.y=y;this.z=z;return this;};
+        v3p.add=function(o){if(typeof o==="number"){this.x+=o;this.y+=o;this.z+=o;}else{this.x+=o.x;this.y+=o.y;this.z+=o.z;}return this;};
+        v3p.sub=function(o){if(typeof o==="number"){this.x-=o;this.y-=o;this.z-=o;}else{this.x-=o.x;this.y-=o.y;this.z-=o.z;}return this;};
+        v3p.mul=function(o){if(typeof o==="number"){this.x*=o;this.y*=o;this.z*=o;}else{this.x*=o.x;this.y*=o.y;this.z*=o.z;}return this;};
+        v3p.dot3d=function(x,y,z){return this.x*x+this.y*y+this.z*z;};
+        v3p.move=function(d){d.x=this.x;d.y=this.y;d.z=this.z;return this;};
+        v3p.wrap2d=function(b){if(this.x>b.x){this.x=0;return true;}if(this.x<0){this.x=b.x;return true;}if(this.y>b.y){this.y=0;return true;}if(this.y<0){this.y=b.y;return true;}};
+        v3p.distance=function(o){var dx=this.x-o.x,dy=this.y-o.y;return Math.sqrt(dx*dx+dy*dy);};
+        v3p.clone=function(){return new Vector3D(this.x,this.y,this.z);};
+
+        /* ---- Simple PRNG ---- */
+        var PRNG = function(seed){
+            this.s = seed|0 || 1;
+        };
+        PRNG.prototype.next = function(){
+            this.s ^= this.s<<13; this.s ^= this.s>>17; this.s ^= this.s<<5;
+            return (this.s>>>0)/4294967296;
+        };
+        PRNG.prototype.rand = function(a,b){
+            if(b===undefined){return this.next();}
+            return a + Math.floor(this.next()*(b-a));
+        };
+
+        /* ---- Perlin Simplex 3D ---- */
+        var grad3=[
+            new Vector3D(1,1,0),new Vector3D(-1,1,0),new Vector3D(1,-1,0),new Vector3D(-1,-1,0),
+            new Vector3D(1,0,1),new Vector3D(-1,0,1),new Vector3D(1,0,-1),new Vector3D(-1,0,-1),
+            new Vector3D(0,1,1),new Vector3D(0,-1,1),new Vector3D(0,1,-1),new Vector3D(0,-1,-1)
+        ];
+        var perm=new Array(512), gradP=new Array(512);
+        var p=[151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+        (function seedPerlin(){
+            for(var i=0;i<256;i++){perm[i]=perm[i+256]=p[i];gradP[i]=gradP[i+256]=grad3[p[i]%12];}
+        })();
+        var F3=1/3, G3=1/6;
+        function simplex3d(x,y,z){
+            var s=(x+y+z)*F3, i=Math.floor(x+s), j=Math.floor(y+s), k=Math.floor(z+s),
+                t=(i+j+k)*G3, x0=x-i+t, y0=y-j+t, z0=z-k+t,
+                i1,j1,k1,i2,j2,k2;
+            if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0;}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1;}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1;}}
+            else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1;}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1;}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0;}}
+            var x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3,
+                x2=x0-i2+2*G3,y2=y0-j2+2*G3,z2=z0-k2+2*G3,
+                x3=x0-1+3*G3,y3=y0-1+3*G3,z3=z0-1+3*G3,
+                ii=i&255,jj=j&255,kk=k&255,
+                gi0=gradP[ii+perm[jj+perm[kk]]],
+                gi1=gradP[ii+i1+perm[jj+j1+perm[kk+k1]]],
+                gi2=gradP[ii+i2+perm[jj+j2+perm[kk+k2]]],
+                gi3=gradP[ii+1+perm[jj+1+perm[kk+1]]],
+                t0=0.6-x0*x0-y0*y0-z0*z0, n0=t0<0?0:(t0*=t0,t0*t0*gi0.dot3d(x0,y0,z0)),
+                t1=0.6-x1*x1-y1*y1-z1*z1, n1=t1<0?0:(t1*=t1,t1*t1*gi1.dot3d(x1,y1,z1)),
+                t2=0.6-x2*x2-y2*y2-z2*z2, n2=t2<0?0:(t2*=t2,t2*t2*gi2.dot3d(x2,y2,z2)),
+                t3=0.6-x3*x3-y3*y3-z3*z3, n3=t3<0?0:(t3*=t3,t3*t3*gi3.dot3d(x3,y3,z3));
+            return 32*(n0+n1+n2+n3);
+        }
+
+        /* ---- Mouse Monitor ---- */
+        var mouse = {
+            pos: new Vector3D(window.innerWidth/2, window.innerHeight/2, 0),
+            state: {left: false, right: false, middle: false}
+        };
+        (function(){
+            var c = document.getElementById('swarm-canvas');
+            if(!c) return;
+            document.addEventListener('mousemove', function(e){
+                mouse.pos.x = e.pageX;
+                mouse.pos.y = e.pageY;
+            });
+            c.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+            document.addEventListener('mousedown', function(e){
+                if(e.which===1) mouse.state.left=true;
+                if(e.which===2) mouse.state.middle=true;
+                if(e.which===3) mouse.state.right=true;
+            });
+            document.addEventListener('mouseup', function(){
+                mouse.state.left=mouse.state.middle=mouse.state.right=false;
+            });
+        })();
+
+        /* ---- Particle ---- */
+        var rng = new PRNG(+new Date());
+        var bounds = new Vector3D(window.innerWidth, window.innerHeight, 0);
+
+        var Particle = function(){
+            this.p = new Vector3D();
+            this.t = new Vector3D();
+            this.v = new Vector3D();
+            this.reset();
+        };
+        Particle.prototype.reset = function(){
+            this.p.x = this.t.x = Math.floor(rng.rand() * bounds.x);
+            this.p.y = this.t.y = Math.floor(rng.rand() * bounds.y);
+            this.v.set(1, 1, 0);
+            this.i = 0;
+            this.l = rng.rand(1000, 10000);
+        };
+        Particle.prototype.step = function(){
+            if(this.i++ > this.l) this.reset();
+            var xx=this.p.x/200, yy=this.p.y/200, zz=Date.now()/5000,
+                a=rng.rand()*Math.PI*2, rr=rng.rand()/4;
+            this.v.x += rr*Math.sin(a) + simplex3d(xx,yy,-zz);
+            this.v.y += rr*Math.cos(a) + simplex3d(xx,yy, zz);
+            if(mouse.state.left){
+                this.v.add(mouse.pos.clone().sub(this.p).mul(0.00085));
+            }
+            if(mouse.state.right && this.p.distance(mouse.pos) < rng.rand(200,250)){
+                this.v.add(this.p.clone().sub(mouse.pos).mul(0.02));
+            }
+            this.p.move(this.t).add(this.v.mul(0.94));
+            if(this.p.wrap2d(bounds)) this.p.move(this.t);
+        };
+        Particle.prototype.render = function(ctx){
+            ctx.moveTo(this.t.x, this.t.y);
+            ctx.lineTo(this.p.x, this.p.y);
+        };
+
+        /* ---- Main Loop ---- */
+        window.addEventListener('load', function(){
+            var canvas = document.getElementById('swarm-canvas');
+            if(!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var hue = 200; // стартовый оттенок — синий/бирюзовый для NEO.HUB
+            var particles = [];
+            var PARTICLE_COUNT = 3000;
+
+            function resize(){
+                canvas.width  = bounds.x = window.innerWidth;
+                canvas.height = bounds.y = window.innerHeight;
+                ctx.fillStyle = '#000005';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            for(var i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
+
+            (function render(){
+                requestAnimationFrame(render);
+                ctx.beginPath();
+                for(var i=0; i<particles.length; i++){
+                    particles[i].step();
+                    particles[i].render(ctx);
+                }
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'rgba(0, 0, 5, 0.10)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'lighter';
+                // Цвет плавно переходит через синий, фиолетовый, зелёный — в стиле NEO.HUB
+                ctx.strokeStyle = 'hsla(' + hue + ', 85%, 55%, 0.55)';
+                ctx.stroke();
+                ctx.closePath();
+                hue = (hue + 0.4) % 360;
+            }());
+        });
+    })();
+    </script>
+</body>
+</html>
