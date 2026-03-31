@@ -3,11 +3,20 @@
    =================================== */
 
    let profilePollInterval = null;
-   
-   // Всегда используем @my_site_ai_bot — именно там живут вопросы и ответы
+   let testingPollInterval = null;
+
+   // @my_site_ai_bot — бот Поддержки (chat.js / profile.js)
    function getNeoTelegramConfig() {
        if(typeof window === 'undefined') return null;
        var cfg = window.NEO_TG_SUPPORT || window.NEO_TG_CONFIG || null;
+       if(!cfg || !cfg.enabled || !cfg.token || !cfg.chatId) return null;
+       return cfg;
+   }
+
+   // @my_tift_bot — бот Тестирования (testing.js / profile.js)
+   function getNeoTestingConfig() {
+       if(typeof window === 'undefined') return null;
+       var cfg = window.NEO_TG_TESTING || null;
        if(!cfg || !cfg.enabled || !cfg.token || !cfg.chatId) return null;
        return cfg;
    }
@@ -389,18 +398,147 @@ function getUserTotalScore(user) {
    }
    
    /* =============================================
+      ПОЛУЧЕНИЕ ОТВЕТОВ ИЗ БОТА ТЕСТИРОВАНИЯ
+      @my_tift_bot — команда /treply NEO-XXXXX subj qId текст
+      ============================================= */
+   async function fetchTestingRepliesFromTelegram() {
+       if(!currentUser || !currentUser.uid) return;
+       var cfg = getNeoTestingConfig();
+       if(!cfg) return;
+       var uid       = currentUser.uid;
+       var offsetKey = 'neoTgOffset_testing_' + cfg.token.slice(-6);
+       var savedOffset = parseInt(localStorage.getItem(offsetKey) || '0', 10);
+       try {
+           var url = 'https://api.telegram.org/bot' + cfg.token
+               + '/getUpdates?limit=100&timeout=0'
+               + (savedOffset > 0 ? '&offset=' + savedOffset : '');
+           var res  = await fetch(url);
+           var data = await res.json();
+           if(!data.ok || !data.result || data.result.length === 0) return;
+           var stored      = JSON.parse(localStorage.getItem('testingReplies') || '{}');
+           var myReplies   = stored[uid] || [];
+           var newFound    = false;
+           var maxUpdateId = savedOffset;
+           data.result.forEach(function(update) {
+               if(update.update_id >= maxUpdateId) maxUpdateId = update.update_id + 1;
+               var msg = update.message;
+               if(!msg || !msg.text) return;
+               // Формат: /treply NEO-XXXXX subj qId текст
+               var match = msg.text.match(/^\/treply\s+(NEO-[A-Z0-9]+)\s+(\S+)\s+(\S+)\s+([\s\S]+)$/);
+               if(!match) return;
+               if(match[1] !== uid) return;
+               var msgId = update.update_id;
+               if(myReplies.some(function(r){ return r.tgUpdateId === msgId; })) return;
+               var subjectKey = match[2];
+               var questionId = match[3];
+               var answerText = match[4].trim();
+               var questionText = '—';
+               try {
+                   var wq = JSON.parse(localStorage.getItem('writtenQuestions') || '[]');
+                   var found = wq.find(function(q){
+                       return q.uid === uid && q.subjectKey === subjectKey && q.questionId === questionId;
+                   });
+                   if(found) questionText = found.question;
+               } catch(e) {}
+               myReplies.push({
+                   answer: answerText, question: questionText,
+                   subjectKey: subjectKey, questionId: questionId,
+                   timestamp: msg.date * 1000, tgUpdateId: msgId
+               });
+               newFound = true;
+               console.log('%c📩 Новый ответ из тестирования для ' + uid, 'color:#0aff68;font-weight:bold;');
+           });
+           if(maxUpdateId > savedOffset) localStorage.setItem(offsetKey, String(maxUpdateId));
+           if(newFound) {
+               stored[uid] = myReplies;
+               localStorage.setItem('testingReplies', JSON.stringify(stored));
+               checkTestingReplies();
+           }
+       } catch(e) {
+           console.warn('Testing Telegram poll error:', e.message);
+       }
+   }
+
+   /* =============================================
+      ОТОБРАЖЕНИЕ ОТВЕТОВ ИЗ ТЕСТИРОВАНИЯ
+      ============================================= */
+   function checkTestingReplies() {
+       if(!currentUser || !currentUser.uid) return;
+       var replies   = JSON.parse(localStorage.getItem('testingReplies') || '{}');
+       var myReplies = replies[currentUser.uid] || [];
+       var container = document.getElementById('testingRepliesContainer');
+       if(!container) return;
+       var clearBtn = document.getElementById('clearTestingRepliesBtn');
+       if(clearBtn) clearBtn.style.display = myReplies.length > 0 ? 'inline-block' : 'none';
+       if(myReplies.length === 0) {
+           container.innerHTML = '<p style="color:var(--text-sec);font-size:0.9rem;text-align:center;padding:10px;">Ответов пока нет</p>';
+           return;
+       }
+       var html = '';
+       var reversed = myReplies.slice().reverse();
+       for(var di = 0; di < reversed.length; di++) {
+           var r = reversed[di];
+           var realIdx = myReplies.length - 1 - di;
+           var dateStr = new Date(r.timestamp).toLocaleString('ru-RU');
+           var subj = (typeof subjectsContent !== 'undefined' && subjectsContent && subjectsContent[r.subjectKey])
+               ? subjectsContent[r.subjectKey].title : (r.subjectKey || '');
+           html += '<div class="reply-item">';
+           html += '<div class="reply-header">';
+           html += '<span class="reply-label"><i class="fas fa-pen-alt"></i> Ответ преподавателя</span>';
+           html += '<div class="reply-meta">';
+           html += '<span class="reply-date">' + dateStr + '</span>';
+           html += '<button class="reply-del-btn" onclick="deleteTestingReply(' + realIdx + ')" title="Удалить"><i class="fas fa-times"></i></button>';
+           html += '</div></div>';
+           if(subj) html += '<div style="font-size:0.78rem;color:var(--neon-yellow);margin-bottom:6px;"><i class="fas fa-book"></i> ' + subj + '</div>';
+           html += '<div class="reply-question"><b>Вопрос:</b> ' + r.question + '</div>';
+           html += '<div class="reply-answer">' + r.answer + '</div>';
+           html += '</div>';
+       }
+       container.innerHTML = html;
+   }
+
+   function deleteTestingReply(index) {
+       if(!currentUser || !currentUser.uid) return;
+       if(!confirm('Удалить этот ответ?')) return;
+       var replies   = JSON.parse(localStorage.getItem('testingReplies') || '{}');
+       var myReplies = replies[currentUser.uid] || [];
+       myReplies.splice(index, 1);
+       replies[currentUser.uid] = myReplies;
+       localStorage.setItem('testingReplies', JSON.stringify(replies));
+       checkTestingReplies();
+   }
+
+   function clearAllTestingReplies() {
+       if(!currentUser || !currentUser.uid) return;
+       if(!confirm('Удалить все ответы из тестирования? Это нельзя отменить.')) return;
+       var replies = JSON.parse(localStorage.getItem('testingReplies') || '{}');
+       replies[currentUser.uid] = [];
+       localStorage.setItem('testingReplies', JSON.stringify(replies));
+       checkTestingReplies();
+   }
+
+   /* =============================================
       POLLING — автообновление каждые 15 сек
       ============================================= */
+
    function startProfilePolling() {
        fetchRepliesFromTelegram();
        checkAdminReplies();
+       fetchTestingRepliesFromTelegram();
+       checkTestingReplies();
        if(profilePollInterval) clearInterval(profilePollInterval);
        profilePollInterval = setInterval(fetchRepliesFromTelegram, 15000);
+       if(testingPollInterval) clearInterval(testingPollInterval);
+       testingPollInterval = setInterval(fetchTestingRepliesFromTelegram, 15000);
    }
    
    function stopProfilePolling() {
        if(profilePollInterval) {
            clearInterval(profilePollInterval);
            profilePollInterval = null;
+       }
+       if(testingPollInterval) {
+           clearInterval(testingPollInterval);
+           testingPollInterval = null;
        }
    }
